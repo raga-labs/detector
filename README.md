@@ -34,3 +34,4 @@ raga-detect path/to/alapana.wav
 ```
 
 The command returns the detected tonic and top three ragas as JSON.
+Phone-recorded M4A files require FFmpeg (`brew install ffmpeg` on macOS).
