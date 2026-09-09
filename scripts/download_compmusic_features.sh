@@ -6,7 +6,16 @@ readonly ARCHIVE="$DATA_DIR/compmusic-raga-features.zip"
 readonly URL="https://zenodo.org/records/7278506/files/Indian%20Art%20Music%20Raga%20Recognition%20Dataset%20%28features%29.zip?download=1"
 
 mkdir -p "$DATA_DIR"
-curl --fail --location --continue-at - --output "$ARCHIVE" "$URL"
+curl \
+  --fail \
+  --location \
+  --continue-at - \
+  --retry 8 \
+  --retry-all-errors \
+  --retry-delay 10 \
+  --connect-timeout 30 \
+  --output "$ARCHIVE" \
+  "$URL"
 
 echo "Downloaded: $ARCHIVE"
 echo "Next: verify and inspect the archive before extraction."
