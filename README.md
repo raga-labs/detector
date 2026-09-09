@@ -1,0 +1,25 @@
+# Raga Identification — Model A
+
+Pitch-first classifier for identifying a Carnatic raga from an approximately
+one-minute alapana.
+
+## Initial scope
+
+The first model is a closed-set classifier for the 12 ragas in
+`config/ragas.json`. More ragas can be added later by adding diverse labelled
+recordings and retraining the classifier.
+
+## Data layout
+
+Place audio under `data/audio/` and describe every recording in
+`data/manifest.csv`. Keep recordings from the same singer and session together
+under one `group_id`; this prevents train/test leakage.
+
+The initial pipeline will:
+
+1. extract the predominant pitch;
+2. normalize it relative to the tonic (Sa);
+3. split it into time windows;
+4. train a sequence classifier;
+5. aggregate window predictions for the one-minute result.
+

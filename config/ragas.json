@@ -1,0 +1,16 @@
+{
+  "ragas": [
+    { "id": "mayamalavagowla", "name": "Mayamalavagowla" },
+    { "id": "kharaharapriya", "name": "Kharaharapriya" },
+    { "id": "kalyani", "name": "Kalyani" },
+    { "id": "hindolam", "name": "Hindolam" },
+    { "id": "mohanam", "name": "Mohanam" },
+    { "id": "shankarabharanam", "name": "Shankarabharanam" },
+    { "id": "bhairavi", "name": "Bhairavi" },
+    { "id": "mukhari", "name": "Mukhari" },
+    { "id": "saveri", "name": "Saveri" },
+    { "id": "kambhoji", "name": "Kambhoji" },
+    { "id": "dharmavati", "name": "Dharmavati" },
+    { "id": "todi", "name": "Todi (Thodi)" }
+  ]
+}
