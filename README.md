@@ -24,3 +24,13 @@ The initial pipeline will:
 5. aggregate window predictions for the one-minute result.
 
 See `docs/BASELINE.md` for the baseline decision and dataset coverage.
+
+## Local inference
+
+After downloading the reference model and installing `requirements-inference.txt`:
+
+```bash
+raga-detect path/to/alapana.wav
+```
+
+The command returns the detected tonic and top three ragas as JSON.
