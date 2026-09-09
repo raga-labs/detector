@@ -19,7 +19,8 @@ The initial pipeline will:
 
 1. extract the predominant pitch;
 2. normalize it relative to the tonic (Sa);
-3. split it into time windows;
-4. train a sequence classifier;
+3. build Time-Delayed Melody Surface (TDMS) windows;
+4. train a compact classifier;
 5. aggregate window predictions for the one-minute result.
 
+See `docs/BASELINE.md` for the baseline decision and dataset coverage.
