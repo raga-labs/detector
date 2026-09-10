@@ -23,6 +23,9 @@ The initial pipeline will:
 4. train a compact classifier;
 5. aggregate window predictions for the one-minute result.
 
+The first independent CompMusic experiment supports 10 of the 12 target ragas;
+Hindolam and Dharmavati are pending suitable training data.
+
 See `docs/BASELINE.md` for the baseline decision and dataset coverage.
 
 ## Local inference
@@ -35,3 +38,15 @@ raga-detect path/to/alapana.wav
 
 The command returns the detected tonic and top three ragas as JSON.
 Phone-recorded M4A files require FFmpeg (`brew install ffmpeg` on macOS).
+
+## Train the independent baseline
+
+After downloading and extracting the CompMusic feature archive:
+
+```bash
+.venv/bin/python scripts/train_compmusic.py
+```
+
+The split is artist-disjoint: no singer in the test recordings appears in the
+training recordings. Generated models and metrics are kept under `artifacts/`
+and are not committed.

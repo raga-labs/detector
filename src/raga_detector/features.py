@@ -47,11 +47,14 @@ def feature_windows(times, frequencies, tonic_hz: float) -> list[np.ndarray]:
     windows: list[np.ndarray] = []
     start = 0.0
     while start < times[-1]:
-        mask = (times >= start) & (times < start + WINDOW_SECONDS)
-        if mask.sum() == 0 or times[mask][-1] - times[mask][0] < 5:
+        left = int(np.searchsorted(times, start, side="left"))
+        right = int(np.searchsorted(times, start + WINDOW_SECONDS, side="left"))
+        segment_times = times[left:right]
+        segment_frequencies = frequencies[left:right]
+        if segment_times.size == 0 or segment_times[-1] - segment_times[0] < 5:
             break
-        if float((frequencies[mask] > 0).mean()) >= MIN_VOICED_FRACTION:
-            surface = tdms(times[mask], frequencies[mask], tonic_hz)
+        if float((segment_frequencies > 0).mean()) >= MIN_VOICED_FRACTION:
+            surface = tdms(segment_times, segment_frequencies, tonic_hz)
             if surface.sum() > 0:
                 windows.append(surface)
         start += HOP_SECONDS

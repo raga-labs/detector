@@ -50,3 +50,16 @@ for our target set and cannot support a robust 12-class model by itself.
 Pitch and tonic annotations can be selected through the Dunya API using the
 `pitch` and `ctonic` slugs, but that route requires a Dunya API token. The full
 archive is also available through Zenodo when that service is reachable.
+
+## CompMusic target coverage
+
+The verified 3.6 GB feature archive was downloaded from Zenodo and only its
+Carnatic directory was extracted. It contains 12 pitch/tonic recordings for
+each of 10 target ragas, with 8–12 distinct artists per raga:
+
+Mayamalavagowla, Kharaharapriya, Kalyani, Mohanam, Shankarabharanam, Bhairavi,
+Mukhari, Saveri, Kambhoji, and Todi.
+
+Hindolam and Dharmavati are absent. The first independently trained model is
+therefore a truthful 10-class experiment. They will be added only after suitable
+training data is obtained.
