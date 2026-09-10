@@ -50,3 +50,9 @@ After downloading and extracting the CompMusic feature archive:
 The split is artist-disjoint: no singer in the test recordings appears in the
 training recordings. Generated models and metrics are kept under `artifacts/`
 and are not committed.
+
+Run the stricter five-fold artist-disjoint evaluation with:
+
+```bash
+.venv/bin/python scripts/cross_validate_compmusic.py
+```

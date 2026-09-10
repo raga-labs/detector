@@ -4,6 +4,7 @@ import json
 import random
 from collections import Counter
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -57,31 +58,44 @@ def _limited_windows(recording: PitchRecording, maximum: int) -> list[np.ndarray
     return [windows[index] for index in indices]
 
 
-def train_model(
-    train_recordings: list[PitchRecording],
-    test_recordings: list[PitchRecording],
-    output_dir: Path,
-    max_windows_per_recording: int = 40,
+def build_feature_cache(
+    recordings: list[PitchRecording], maximum: int, verbose: bool = True
+) -> dict[str, np.ndarray]:
+    cache: dict[str, np.ndarray] = {}
+    for number, recording in enumerate(recordings, start=1):
+        windows = _limited_windows(recording, maximum)
+        cache[recording.track_id] = (
+            np.vstack(windows)
+            if windows
+            else np.empty((0, 48 * 48), dtype=np.float32)
+        )
+        if verbose:
+            print(
+                f"features {number:3}/{len(recordings)} "
+                f"{recording.raga:20} {recording.artist:28} windows={len(windows):2}",
+                flush=True,
+            )
+    return cache
+
+
+def fit_classifier(
+    recordings: list[PitchRecording],
+    feature_cache: dict[str, np.ndarray],
+    classes: list[str],
     seed: int = 42,
-) -> dict:
+) -> Any:
     from xgboost import XGBClassifier
 
-    classes = sorted({recording.raga for recording in train_recordings})
     class_index = {raga: index for index, raga in enumerate(classes)}
-    train_features: list[np.ndarray] = []
-    train_labels: list[int] = []
-
-    for number, recording in enumerate(train_recordings, start=1):
-        windows = _limited_windows(recording, max_windows_per_recording)
-        train_features.extend(windows)
-        train_labels.extend([class_index[recording.raga]] * len(windows))
-        print(
-            f"features {number:3}/{len(train_recordings)} "
-            f"{recording.raga:20} {recording.artist:28} windows={len(windows):2}",
-            flush=True,
-        )
-
-    if not train_features:
+    features: list[np.ndarray] = []
+    labels: list[int] = []
+    for recording in recordings:
+        windows = feature_cache[recording.track_id]
+        if len(windows) == 0:
+            continue
+        features.append(windows)
+        labels.extend([class_index[recording.raga]] * len(windows))
+    if not features:
         raise ValueError("No usable training windows were created")
 
     model = XGBClassifier(
@@ -96,50 +110,75 @@ def train_model(
         random_state=seed,
         n_jobs=-1,
     )
-    model.fit(np.vstack(train_features), np.asarray(train_labels))
+    model.fit(np.vstack(features), np.asarray(labels))
+    return model
 
-    correct_top1 = 0
-    correct_top3 = 0
+
+def evaluate_classifier(
+    model: Any,
+    recordings: list[PitchRecording],
+    feature_cache: dict[str, np.ndarray],
+    classes: list[str],
+) -> list[dict]:
     evaluated: list[dict] = []
-    for recording in test_recordings:
-        windows = _limited_windows(recording, max_windows_per_recording)
-        if not windows:
+    for recording in recordings:
+        windows = feature_cache[recording.track_id]
+        if len(windows) == 0:
             continue
-        probabilities = model.predict_proba(np.vstack(windows)).mean(axis=0)
+        probabilities = model.predict_proba(windows).mean(axis=0)
         order = np.argsort(probabilities)[::-1]
-        prediction = classes[int(order[0])]
-        top3 = [classes[int(index)] for index in order[:3]]
-        correct_top1 += prediction == recording.raga
-        correct_top3 += recording.raga in top3
         evaluated.append(
             {
                 "track_id": recording.track_id,
                 "artist": recording.artist,
                 "expected": recording.raga,
-                "predicted": prediction,
-                "top3": top3,
+                "predicted": classes[int(order[0])],
+                "top3": [classes[int(index)] for index in order[:3]],
             }
         )
+    return evaluated
 
-    total = len(evaluated)
-    metrics = {
-        "classes": classes,
-        "train_recordings": len(train_recordings),
-        "test_recordings": total,
-        "train_artists": len({recording.artist for recording in train_recordings}),
-        "test_artists": len({recording.artist for recording in test_recordings}),
-        "training_windows": len(train_features),
-        "top1_accuracy": correct_top1 / total if total else 0.0,
-        "top3_accuracy": correct_top3 / total if total else 0.0,
-        "evaluated": evaluated,
-    }
 
+def save_model_bundle(model: Any, classes: list[str], output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     model.save_model(output_dir / "raaga_xgb.json")
     (output_dir / "raaga_xgb.classes.json").write_text(
         json.dumps(classes, ensure_ascii=False, indent=2) + "\n"
     )
     (output_dir / "raaga_xgb.calib.json").write_text('{"temperature": 1.0}\n')
+
+
+def train_model(
+    train_recordings: list[PitchRecording],
+    test_recordings: list[PitchRecording],
+    output_dir: Path,
+    max_windows_per_recording: int = 40,
+    seed: int = 42,
+) -> dict:
+    classes = sorted({recording.raga for recording in train_recordings})
+    all_recordings = train_recordings + test_recordings
+    feature_cache = build_feature_cache(all_recordings, max_windows_per_recording)
+    model = fit_classifier(train_recordings, feature_cache, classes, seed)
+    evaluated = evaluate_classifier(model, test_recordings, feature_cache, classes)
+
+    total = len(evaluated)
+    correct_top1 = sum(item["expected"] == item["predicted"] for item in evaluated)
+    correct_top3 = sum(item["expected"] in item["top3"] for item in evaluated)
+    metrics = {
+        "classes": classes,
+        "train_recordings": len(train_recordings),
+        "test_recordings": total,
+        "train_artists": len({recording.artist for recording in train_recordings}),
+        "test_artists": len({recording.artist for recording in test_recordings}),
+        "training_windows": sum(
+            len(feature_cache[recording.track_id]) for recording in train_recordings
+        ),
+        "top1_accuracy": correct_top1 / total if total else 0.0,
+        "top3_accuracy": correct_top3 / total if total else 0.0,
+        "evaluated": evaluated,
+    }
+
+    save_model_bundle(model, classes, output_dir)
     (output_dir / "metrics.json").write_text(
         json.dumps(metrics, ensure_ascii=False, indent=2) + "\n"
     )

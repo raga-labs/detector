@@ -48,3 +48,24 @@ production-quality accuracy claim. The test set is small, represents concert
 recordings rather than phone alapanas, and may contain compositions also heard
 in training under different artists. Multi-split evaluation and a larger
 real-world blind set are required next.
+
+## Five-fold artist-disjoint evaluation
+
+Every one of the 120 recordings was held out exactly once across five folds.
+In each fold, none of its test singers appeared in that fold's training data.
+
+- Aggregate top-1: 115/120 (0.958)
+- Aggregate top-3: 119/120 (0.992)
+- Fold top-1 range: 0.875–1.000
+- TDMS windows cached across folds: 4,308
+- Exact normalized composition-title overlaps by fold: 2, 2, 7, 5, 6
+
+Top-1 errors were two Mukhari-to-Bhairavi confusions, one
+Bhairavi-to-Mukhari confusion, one Bhairavi-to-Todi confusion, and one
+Kambhoji-to-Mohanam confusion. Only the Bhairavi-to-Todi error fell outside the
+top three.
+
+Both private phone recordings were correct in all five models. Mean raw
+probability was 0.937 for Mayamalavagowla and 0.842 for Mukhari. The remaining
+composition-title overlap means this is strong validation, but not yet a fully
+composition-independent or real-world production benchmark.

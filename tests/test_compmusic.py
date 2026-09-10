@@ -3,6 +3,7 @@ import json
 import numpy as np
 
 from raga_detector.compmusic import discover_recordings, load_pitch
+from raga_detector.evaluation import cross_validation_splits
 from raga_detector.training import split_by_artist
 
 
@@ -43,3 +44,18 @@ def test_artist_split_has_no_leakage_and_covers_every_raga(tmp_path):
     )
     assert {recording.raga for recording in train} == {"kalyani", "mohanam"}
     assert {recording.raga for recording in test} == {"kalyani", "mohanam"}
+
+
+def test_cross_validation_keeps_each_artist_in_one_side(tmp_path):
+    for raga_id, raga_name in (("r1", "Kalyāṇi"), ("r2", "Mōhanaṁ")):
+        for number in range(10):
+            _recording(tmp_path, raga_id, raga_name, f"Singer-{number}", f"Song-{number}")
+    recordings = discover_recordings(tmp_path)
+    splits = cross_validation_splits(recordings, folds=5)
+    seen_test_artists = []
+    for train, test in splits:
+        train_artists = {recording.artist for recording in train}
+        test_artists = {recording.artist for recording in test}
+        assert train_artists.isdisjoint(test_artists)
+        seen_test_artists.extend(test_artists)
+    assert sorted(seen_test_artists) == [f"Singer-{number}" for number in range(10)]

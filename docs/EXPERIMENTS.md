@@ -47,3 +47,19 @@
 - Error: Bhairavi by T. M. Krishna predicted as Todi
 - Model path: `artifacts/models/compmusic-target-v1` (local; not committed)
 - Interpretation: training pipeline validated; broader evaluation still needed
+
+## E004 — Five-fold artist-disjoint cross-validation
+
+- Date: 2026-09-10
+- Data: all 120 CompMusic recordings for the 10 supported target ragas
+- Protocol: five folds; every recording tested once; no singer leakage per fold
+- Feature examples: 4,308 cached TDMS windows
+- Aggregate top-1: 115/120 (0.958)
+- Aggregate top-3: 119/120 (0.992)
+- Fold top-1: 1.000, 0.957, 0.875, 1.000, 0.955
+- Exact composition-title overlap: 2–7 titles per fold
+- Private Mayamalavagowla: correct in 5/5 models; mean probability 0.937
+- Private Mukhari: correct in 5/5 models; mean probability 0.842
+- Metrics path: `artifacts/evaluations/compmusic-artist-cv-v1/metrics.json`
+- Interpretation: accuracy is stable across unseen singers; composition-disjoint
+  and larger phone-recording tests remain necessary
